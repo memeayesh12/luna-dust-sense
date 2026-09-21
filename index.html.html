@@ -10,9 +10,9 @@
 <style>
   :root {
     box-sizing: border-box;
-    --bg-deep: #0a0d13;
-    --bg-panel: #11151d;
-    --bg-panel-2: #161b25;
+    --bg-deep: #000000;
+    --bg-panel: #0d0d0d;
+    --bg-panel-2: #141414;
     --line: rgba(169,162,154,0.22);
     --line-strong: rgba(169,162,154,0.4);
     --regolith: #9a938a;
@@ -22,22 +22,40 @@
     --amber-dim: rgba(242,169,59,0.18);
     --cyan: #4fd8c4;
     --cyan-dim: rgba(79,216,196,0.16);
+    --nav-bg: rgba(0,0,0,0.82);
     --font-head: 'Space Grotesk', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  :root:not([data-theme="light"]) {
+  :root {
     color-scheme: dark;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg-deep: #0a0d13; }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg-deep: #ffffff;
+    --bg-panel: #ffffff;
+    --bg-panel-2: #f2f2f2;
+    --line: rgba(60,55,48,0.16);
+    --line-strong: rgba(60,55,48,0.3);
+    --regolith: #5a544c;
+    --text-primary: #17130f;
+    --text-dim: #6b655c;
+    --amber: #b9741f;
+    --amber-dim: rgba(185,116,31,0.14);
+    --cyan: #0f8f7c;
+    --cyan-dim: rgba(15,143,124,0.12);
+    --nav-bg: rgba(255,255,255,0.85);
   }
-  :root[data-theme="dark"] { --bg-deep: #0a0d13; }
-  html { scroll-padding-top: env(safe-area-inset-top, 0px); scroll-behavior: smooth; }
+  html {
+    background: var(--bg-deep);
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+    scroll-behavior: smooth;
+  }
   * { box-sizing: inherit; }
   body {
     margin: 0;
+    min-height: 100%;
     background: var(--bg-deep);
     color: var(--text-primary);
     font-family: var(--font-head);
@@ -60,7 +78,7 @@
 
   header.nav {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
-    background: rgba(10,13,19,0.82);
+    background: var(--nav-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
@@ -70,6 +88,15 @@
   nav.links { display: flex; gap: 22px; font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-dim); }
   nav.links a { text-decoration: none; }
   nav.links a:hover { color: var(--cyan); }
+  .theme-toggle {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line-strong); background: var(--bg-panel);
+    color: var(--text-primary); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--cyan); color: var(--cyan); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
   section { position: relative; z-index: 1; padding: 96px 0; border-bottom: 1px solid var(--line); }
   section:last-of-type { border-bottom: none; }
@@ -192,6 +219,10 @@
       <a href="#team">Team</a>
       <a href="#contact">Contact</a>
     </nav>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch between dark and light mode">
+      <svg id="iconMoon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iconSun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
   </div>
 </header>
 
@@ -420,6 +451,40 @@
     else { setTimeout(step, 200); }
   }
   step();
+})();
+
+// Theme toggle (dark / light), remembered per visitor
+(function(){
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const iconMoon = document.getElementById('iconMoon');
+  const iconSun = document.getElementById('iconSun');
+  let saved = null;
+  try { saved = localStorage.getItem('luna-dust-sense-theme'); } catch(e) {}
+  function apply(theme){
+    const dark = { bg: '#000000', text: '#ece9e2' };
+    const light = { bg: '#ffffff', text: '#17130f' };
+    const chosen = theme === 'light' ? light : dark;
+    if(theme === 'light'){
+      root.setAttribute('data-theme','light');
+      iconMoon.style.display = 'none';
+      iconSun.style.display = 'block';
+    } else {
+      root.setAttribute('data-theme','dark');
+      iconSun.style.display = 'none';
+      iconMoon.style.display = 'block';
+    }
+    document.documentElement.style.background = chosen.bg;
+    document.body.style.background = chosen.bg;
+    document.body.style.color = chosen.text;
+  }
+  apply(saved === 'light' ? 'light' : 'dark');
+  btn.addEventListener('click', function(){
+    const isLight = root.getAttribute('data-theme') === 'light';
+    const next = isLight ? 'dark' : 'light';
+    apply(next);
+    try { localStorage.setItem('luna-dust-sense-theme', next); } catch(e) {}
+  });
 })();
 
 // Contact form -> opens the user's email client with the message pre-filled
